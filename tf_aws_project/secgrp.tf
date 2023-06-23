@@ -38,6 +38,33 @@ resource "aws_security_group" "vprofile-bastion-sg" {
   }
 }
 
+resource "aws_security_group" "vprofile-jenkins-sg" {
+  name        = "vprofile-jenkins-sg"
+  description = "Security Group for Jenkins Host ec2"
+  vpc_id      = module.vpc.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.MYIP]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = [var.MYIP]
+  }
+}
+
 resource "aws_security_group" "vprofile-ec2-prod-sg" {
   name        = "vprofile-ec2-prod-SG"
   description = "Security Group for Beanstalk EC2 Instances"
@@ -75,6 +102,14 @@ resource "aws_security_group" "vprofile-backend-sg" {
     to_port         = 0
     protocol        = "-1"
     security_groups = [aws_security_group.vprofile-ec2-prod-sg.id]
+    # security_groups = [aws_security_group.vprofile-ec2-prod-sg.id, aws_security_group.vprofile-bastion-sg.id]
+  }
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.vprofile-bastion-sg.id]
   }
 }
 

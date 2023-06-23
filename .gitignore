@@ -8,3 +8,4 @@ terraform.tfstate.backup
 tf_aws_project/env.auto.tfvars
 tf_aws_project/tf-key
 tf_aws_project/tf-key.pub
+tf_aws_project/plan.txt

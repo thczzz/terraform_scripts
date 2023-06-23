@@ -29,6 +29,18 @@ resource "aws_elastic_beanstalk_environment" "vprofile-bean-prod" {
   }
 
   setting {
+      namespace = "aws:autoscaling:launchconfiguration"
+      name      = "IamInstanceProfile"
+      value     = "vprofile-bean-role"
+  }
+
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "RootVolumeSize"
+    value     = "8"
+  }
+
+  setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "EC2KeyName"
     value     = aws_key_pair.tfkey.key_name
@@ -71,19 +83,19 @@ resource "aws_elastic_beanstalk_environment" "vprofile-bean-prod" {
   }
 
   setting {
-    namespace = "aws:elasticbeanstalk:updatepolicy:rollingupdate"
+    namespace = "aws:autoscaling:updatepolicy:rollingupdate"
     name      = "RollingUpdateEnabled"
     value     = "true"
   }
 
   setting {
-    namespace = "aws:elasticbeanstalk:updatepolicy:rollingupdate"
+    namespace = "aws:autoscaling:updatepolicy:rollingupdate"
     name      = "RollingUpdateType"
     value     = "Health"
   }
 
   setting {
-    namespace = "aws:elasticbeanstalk:updatepolicy:rollingupdate"
+    namespace = "aws:autoscaling:updatepolicy:rollingupdate"
     name      = "MaxBatchSize"
     value     = "1"
   }

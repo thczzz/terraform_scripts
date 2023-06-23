@@ -1,0 +1,91 @@
+pipeline {
+    agent any
+    tools {
+        maven "maven3"
+        jdk   "OpenJdk11"
+    }
+
+    stages {
+        stage('Fetch code') {
+            steps {
+              git branch: 'vp-rem', url: 'https://github.com/thczzz/vprofile-project.git'
+            }
+        }
+
+        stage('Update application.properties') {
+          steps {
+            sh '''
+              rm -rf src/main/resources/application.properties
+              cp /home/ubuntu/application.properties src/main/resources/
+            '''
+          }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn install -DskipTests'
+            }
+
+            post {
+                success {
+                    echo 'Now Archiving it...'
+                    archiveArtifacts artifacts: '**/target/*.war'
+                }
+            }
+        }
+
+        stage('UNIT TESTS') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('Checkstyle Analysis') {
+            steps {
+                sh 'mvn checkstyle:checkstyle'
+            }
+        }
+
+        stage('Rename vprofile-v2.war') {
+          steps {
+            sh 'mv target/vprofile-v2.war target/ROOT.war'
+          }
+        }
+
+        stage('Deploy to BeanStalk') {
+          steps {
+            step(
+              [
+                $class: 'AWSEBDeploymentBuilder', 
+                zeroDowntime: false,
+                awsRegion: 'us-east-1', 
+                applicationName: 'vprofile-prod2', 
+                environmentName: 'vprofile-bean-prod', 
+                bucketName: 'elasticbeanstalk-us-east-1-930052591067', 
+                rootObject: "target",
+                includes: "ROOT.war",
+                credentialId: "ebsDeployment",
+                versionLabelFormat: 'test', 
+                versionDescriptionFormat: 'test'
+              ]
+            )
+          } 
+        }
+
+        stage('Cleanup') {
+          steps {
+            sh 'rm -rf *'
+          }
+        }
+
+
+    }
+    // post {
+    //     always {
+    //         echo 'Slack Notifications.'
+    //         slackSend channel: '#jenkinscicd',
+    //                   color: COLOR_MAP[currentBuild.currentResult],
+    //                   message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+    //     }
+    // }
+}
